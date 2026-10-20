@@ -1,0 +1,61 @@
+name: Deploy to Production
+
+# Runs after a pull request is merged into main, daily, or on demand.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"   # daily 06:00 UTC refresh
+  workflow_dispatch:
+
+# Never run two production deploys at the same time.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  dbt-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DBT_TARGET: prod
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+    defaults:
+      run:
+        working-directory: marketing_dbt
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r ../requirements.txt
+
+      - name: dbt deps
+        run: dbt deps
+
+      - name: Build and test (incremental)
+        run: dbt build
+
+      - name: Generate static docs
+        if: always()
+        run: dbt docs generate --static
+
+      - name: Generate Elementary report
+        if: always()
+        run: edr report --profiles-dir . --profile-target prod --file-path edr_target/elementary_report.html
+
+      - name: Upload docs and Elementary report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-docs-and-elementary
+          path: |
+            marketing_dbt/target/static_index.html
+            marketing_dbt/edr_target/elementary_report.html

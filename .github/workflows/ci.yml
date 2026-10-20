@@ -1,0 +1,47 @@
+name: CI
+
+# Validate every pull request into main in an isolated, throw-away schema.
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dbt-ci:
+    runs-on: ubuntu-latest
+    env:
+      DBT_TARGET: ci
+      CI_SCHEMA: pr_${{ github.event.pull_request.number }}
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+    defaults:
+      run:
+        working-directory: marketing_dbt
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r ../requirements.txt
+
+      - name: dbt deps
+        run: dbt deps
+
+      - name: Check connection (service principal)
+        run: dbt debug
+
+      - name: Build and test all models
+        # --full-refresh: every PR schema starts clean
+        run: dbt build --full-refresh
+
+      - name: Validate documentation
+        run: dbt docs generate --static

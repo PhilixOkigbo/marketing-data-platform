@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: int_facebook_ads__daily
+    description: Facebook daily stats joined to ad, ad group, campaign and account, in the shared vocabulary. One row per ad per day.
+
+  - name: int_snapchat_ads__daily
+    description: Snapchat daily stats summed across countries and joined to ad, ad group and campaign, in the shared vocabulary. One row per ad per day.
+
+  - name: int_marketing_ads
+    description: Union of Facebook and Snapchat in one structure, plus spend converted to EUR. One row per platform per ad per day.
+    columns:
+      - name: marketing_spend_id
+        description: Surrogate key of platform + ad_id + date_day.
+        data_tests: [unique, not_null]
+      - name: spend_eur
+        description: Spend converted to EUR. Null would mean a missing currency rate.
+        data_tests: [not_null]
