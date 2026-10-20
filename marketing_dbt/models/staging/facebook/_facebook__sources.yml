@@ -1,0 +1,39 @@
+version: 2
+
+sources:
+  - name: facebook_ads
+    description: Raw Facebook Ads exports, uploaded as-is into the bronze catalog (all columns stored as strings).
+    database: bronze
+    schema: facebook_ads
+    tables:
+      - name: ads_stats
+        description: Daily ad performance. One row per ad per day.
+        columns:
+          - name: ad_id
+            data_tests: [not_null]
+          - name: ad_date
+            data_tests: [not_null]
+
+      - name: new_ads_de_randomized
+        description: Ads with their campaign, ad group and account. One row per ad.
+        columns:
+          - name: ad_id
+            data_tests: [unique, not_null]
+
+      - name: new_adgroup_de_randomized
+        description: Ad group names. One row per ad group.
+        columns:
+          - name: ad_group_id
+            data_tests: [unique, not_null]
+
+      - name: new_campaign_de_randomized
+        description: Campaign names. One row per campaign.
+        columns:
+          - name: campaign_id
+            data_tests: [unique, not_null]
+
+      - name: new_acccount_de_randomized
+        description: Ad accounts, including the account's currency. Table name keeps the typo from the source file.
+        columns:
+          - name: account_id
+            data_tests: [unique, not_null]
