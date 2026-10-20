@@ -1,0 +1,56 @@
+version: 2
+
+models:
+  - name: stg_snapchat_ads__ad_stats
+    description: Daily Snapchat ad performance by country, typed and cleaned. One row per ad per day per country.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [ad_id, date_day, country_code]
+    columns:
+      - name: ad_id
+        description: Snapchat ad ID (renamed from ad_detail_id).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_snapchat_ads__ads')
+                field: ad_id
+      - name: date_day
+        description: Day the performance was recorded.
+        data_tests: [not_null]
+      - name: country_code
+        description: Two-letter country code, lower case.
+      - name: currency_code
+        description: Currency of spend.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['USD', 'EUR']
+
+  - name: stg_snapchat_ads__ads
+    description: Snapchat ads with their ad group. One row per ad.
+    columns:
+      - name: ad_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+
+  - name: stg_snapchat_ads__ad_groups
+    description: Snapchat ad groups, latest version only. One row per ad group.
+    columns:
+      - name: ad_group_id
+        description: Primary key (deduplicated from the history table).
+        data_tests: [unique, not_null]
+      - name: campaign_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_snapchat_ads__campaigns')
+                field: campaign_id
+
+  - name: stg_snapchat_ads__campaigns
+    description: Snapchat campaigns. One row per campaign.
+    columns:
+      - name: campaign_id
+        description: Primary key.
+        data_tests: [unique, not_null]

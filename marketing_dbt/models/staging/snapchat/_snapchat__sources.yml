@@ -1,0 +1,32 @@
+version: 2
+
+sources:
+  - name: snapchat_ads
+    description: Raw Snapchat Ads exports, uploaded as-is into the bronze catalog (all columns stored as strings).
+    database: bronze
+    schema: snapchat_ads
+    tables:
+      - name: snapchat_ads_stats
+        description: Daily ad performance. One row per ad per day per country. Spend is in EUR (normal units, not micro).
+        columns:
+          - name: ad_detail_id
+            description: The ad ID (joins to ad_id in the ad history table).
+            data_tests: [not_null]
+
+      - name: snapchat_ads_ad_history_new_ad_names
+        description: Ads and their ad group. One row per ad.
+        columns:
+          - name: ad_id
+            data_tests: [unique, not_null]
+
+      - name: snapchat_ads_adgroup_history_new_ad_group_names
+        description: Ad group history. Can hold more than one version of an ad group; staging keeps the latest.
+        columns:
+          - name: _surrogate_key
+            data_tests: [unique, not_null]
+
+      - name: snapchat_ads_campaign_history_new_campaign_names
+        description: Campaigns and their account. One row per campaign.
+        columns:
+          - name: campaign_id
+            data_tests: [unique, not_null]

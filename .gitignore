@@ -3,4 +3,5 @@
 target/
 dbt_packages/
 logs/
-edr_target/
+edr_target/.user.yml
+.DS_Store

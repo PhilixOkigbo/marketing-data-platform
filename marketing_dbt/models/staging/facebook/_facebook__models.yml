@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: stg_facebook_ads__ad_stats
+    description: Daily Facebook ad performance, typed and cleaned. One row per ad per day. Null impressions/clicks are set to 0.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [ad_id, date_day]
+    columns:
+      - name: ad_id
+        description: Facebook ad ID.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_facebook_ads__ads')
+                field: ad_id
+      - name: account_id
+        description: Facebook ad account ID.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_facebook_ads__accounts')
+                field: account_id
+      - name: date_day
+        description: Day the performance was recorded.
+        data_tests: [not_null]
+      - name: spend
+        description: Amount spent, in the account's currency.
+      - name: impressions
+        description: Number of times the ad was shown.
+      - name: clicks
+        description: Number of clicks on the ad.
+
+  - name: stg_facebook_ads__ads
+    description: Facebook ads with their ad group, campaign and account. One row per ad.
+    columns:
+      - name: ad_id
+        description: Facebook ad ID (primary key).
+        data_tests: [unique, not_null]
+      - name: ad_group_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_facebook_ads__ad_groups')
+                field: ad_group_id
+      - name: campaign_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_facebook_ads__campaigns')
+                field: campaign_id
+      - name: ad_status
+        description: Current status of the ad.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['active', 'paused', 'archived', 'deleted']
+
+  - name: stg_facebook_ads__ad_groups
+    description: Facebook ad groups (ad sets). One row per ad group.
+    columns:
+      - name: ad_group_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+
+  - name: stg_facebook_ads__campaigns
+    description: Facebook campaigns. One row per campaign.
+    columns:
+      - name: campaign_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+
+  - name: stg_facebook_ads__accounts
+    description: Facebook ad accounts. One row per account. Holds the currency that spend is reported in.
+    columns:
+      - name: account_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+      - name: currency_code
+        description: ISO currency of the account's spend.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['USD', 'EUR']

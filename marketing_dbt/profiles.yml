@@ -1,0 +1,73 @@
+# No secrets in this file: every credential is read from an environment variable.
+#   dev  -> developer, personal access token (local only)
+#   ci   -> GitHub Actions on pull requests, service principal (OAuth M2M)
+#   prod -> GitHub Actions on merge to main, service principal (OAuth M2M)
+# Pick the target with DBT_TARGET (defaults to dev).
+
+marketing_dbt:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      catalog: development
+      schema: "{{ env_var('DEV_SCHEMA', 'dbt_chinedu') }}"
+      threads: 4
+
+    ci:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      auth_type: oauth
+      client_id: "{{ env_var('DATABRICKS_CLIENT_ID') }}"
+      client_secret: "{{ env_var('DATABRICKS_CLIENT_SECRET') }}"
+      catalog: ci_development
+      schema: "{{ env_var('CI_SCHEMA', 'pr_local') }}"
+      threads: 4
+
+    prod:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      auth_type: oauth
+      client_id: "{{ env_var('DATABRICKS_CLIENT_ID') }}"
+      client_secret: "{{ env_var('DATABRICKS_CLIENT_SECRET') }}"
+      catalog: production
+      schema: marketing
+      threads: 4
+
+# Profile used by the Elementary CLI (edr) to read Elementary's tables.
+# Schema = where the Elementary dbt package writes (see generate_schema_name macro).
+elementary:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      catalog: development
+      schema: "{{ env_var('DEV_SCHEMA', 'dbt_chinedu') }}_elementary"
+      threads: 4
+    ci:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      auth_type: oauth
+      client_id: "{{ env_var('DATABRICKS_CLIENT_ID') }}"
+      client_secret: "{{ env_var('DATABRICKS_CLIENT_SECRET') }}"
+      catalog: ci_development
+      schema: "{{ env_var('CI_SCHEMA', 'pr_local') }}_elementary"
+      threads: 4
+    prod:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      auth_type: oauth
+      client_id: "{{ env_var('DATABRICKS_CLIENT_ID') }}"
+      client_secret: "{{ env_var('DATABRICKS_CLIENT_SECRET') }}"
+      catalog: production
+      schema: elementary
+      threads: 4

@@ -1,0 +1,132 @@
+version: 2
+
+models:
+  - name: fct_marketing_spend
+    description: >
+      Unified paid-advertising performance across Facebook and Snapchat.
+      **Grain: one row per platform, per ad, per day.**
+      Use this table for any question about spend, impressions or clicks; filter or
+      group by platform, campaign, ad group, ad or date. Snapchat rows are summed
+      across countries. Spend is given in the original currency (`spend` +
+      `currency_code`) and in EUR (`spend_eur`); use `spend_eur` when adding spend
+      across platforms or accounts.
+    data_tests:
+      - elementary.volume_anomalies:
+          arguments:
+            timestamp_column: date_day
+          config:
+            severity: warn
+      - elementary.schema_changes:
+          config:
+            severity: warn
+    columns:
+      - name: marketing_spend_id
+        description: Primary key. Surrogate key of platform + ad_id + date_day.
+        data_tests: [unique, not_null]
+      - name: date_day
+        description: Day the advertising activity happened.
+        data_tests: [not_null]
+      - name: platform
+        description: Advertising platform the row comes from.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['facebook', 'snapchat']
+      - name: account_id
+        description: Ad account ID on the platform.
+      - name: account_name
+        description: Ad account name. Not available for Snapchat (null).
+      - name: campaign_id
+        description: Campaign ID on the platform.
+        data_tests: [not_null]
+      - name: campaign_name
+        description: Campaign name as set in the ad platform.
+      - name: ad_group_id
+        description: Ad group (Facebook "ad set") ID.
+      - name: ad_group_name
+        description: Ad group name.
+      - name: ad_id
+        description: Ad (creative) ID on the platform. Unique only within a platform.
+        data_tests: [not_null]
+      - name: ad_name
+        description: Ad name.
+      - name: currency_code
+        description: Currency `spend` is reported in.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['USD', 'EUR']
+      - name: spend
+        description: Amount spent, in `currency_code`. Do not add across currencies; use `spend_eur`.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: spend_eur
+        description: Amount spent converted to EUR (see seed currency_rates_to_eur). Safe to sum across platforms.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: impressions
+        description: Number of times ads were shown.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: clicks
+        description: Number of clicks on ads.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: dbt_loaded_at
+        description: When dbt last wrote this row.
+
+  - name: fct_campaign_performance_daily
+    description: >
+      Campaign performance with ready-made KPIs.
+      **Grain: one row per platform, per campaign, per day** (per currency).
+      Best starting point for dashboards and AI agents. CTR, CPC and CPM are correct
+      at this grain only: for longer periods re-calculate them from summed
+      clicks, impressions and spend_eur rather than averaging them.
+    columns:
+      - name: campaign_performance_id
+        description: Primary key. Surrogate key of platform + campaign_id + date_day + currency_code.
+        data_tests: [unique, not_null]
+      - name: platform
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['facebook', 'snapchat']
+      - name: date_day
+        description: Day of activity.
+      - name: campaign_id
+        description: Campaign ID on the platform.
+      - name: campaign_name
+        description: Campaign name.
+      - name: spend
+        description: Spend in `currency_code`.
+      - name: spend_eur
+        description: Spend in EUR.
+      - name: impressions
+        description: Total impressions.
+      - name: clicks
+        description: Total clicks.
+      - name: ctr
+        description: Click-through rate = clicks / impressions. Null when impressions = 0.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: cpc_eur
+        description: Cost per click in EUR = spend_eur / clicks. Null when clicks = 0.
+      - name: cpm_eur
+        description: Cost per 1,000 impressions in EUR = spend_eur / impressions x 1000. Null when impressions = 0.
