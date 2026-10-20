@@ -13,21 +13,21 @@ CREATE CATALOG IF NOT EXISTS ci_development;  -- ci target (one schema per pull 
 CREATE CATALOG IF NOT EXISTS production;      -- prod target (consumed by analysts, BI, AI)
 
 -- 2. Service principal: READ raw data only
-GRANT USE CATALOG ON CATALOG bronze TO `<SP_APPLICATION_ID>`;
-GRANT USE SCHEMA  ON CATALOG bronze TO `<SP_APPLICATION_ID>`;
-GRANT SELECT      ON CATALOG bronze TO `<SP_APPLICATION_ID>`;
+GRANT USE CATALOG ON CATALOG bronze TO `ec1c1537-0e56-45ff-bc1f-7e88ec7337eb`;
+GRANT USE SCHEMA  ON CATALOG bronze TO `ec1c1537-0e56-45ff-bc1f-7e88ec7337eb`;
+GRANT SELECT      ON CATALOG bronze TO `ec1c1537-0e56-45ff-bc1f-7e88ec7337eb`;
 
 -- 3. Service principal: BUILD in CI and production
 GRANT USE CATALOG, USE SCHEMA, CREATE SCHEMA, CREATE TABLE, SELECT, MODIFY
-    ON CATALOG ci_development TO `<SP_APPLICATION_ID>`;
+    ON CATALOG ci_development TO `ec1c1537-0e56-45ff-bc1f-7e88ec7337eb`;
 GRANT USE CATALOG, USE SCHEMA, CREATE SCHEMA, CREATE TABLE, SELECT, MODIFY
-    ON CATALOG production TO `<SP_APPLICATION_ID>`;
+    ON CATALOG production TO `ec1c1537-0e56-45ff-bc1f-7e88ec7337eb`;
 -- Note: the service principal has no access to the development catalog.
 
 -- 4. Developer (you): READ what CI and production built, to inspect PR results.
 --    You build only in development (you own it, so no grant needed there).
-GRANT USE CATALOG, USE SCHEMA, SELECT ON CATALOG ci_development TO `<YOUR_EMAIL>`;
-GRANT USE CATALOG, USE SCHEMA, SELECT ON CATALOG production     TO `<YOUR_EMAIL>`;
+GRANT USE CATALOG, USE SCHEMA, SELECT ON CATALOG ci_development TO `felixokigbo95@gmail.com`;
+GRANT USE CATALOG, USE SCHEMA, SELECT ON CATALOG production     TO `felixokigbo95@gmail.com`;
 
 -- 5. Check
 SHOW GRANTS ON CATALOG production;
