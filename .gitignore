@@ -1,0 +1,6 @@
+.venv/
+.env
+target/
+dbt_packages/
+logs/
+edr_target/
